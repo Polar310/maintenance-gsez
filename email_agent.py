@@ -9,11 +9,24 @@ import pandas as pd
 import io
 import base64
 import os
+import streamlit as st
+import json
 
 # Google Sheets setup with error handling
 try:
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
+    
+    # Try to get credentials from Streamlit secrets first
+    if 'gcp_service_account' in st.secrets:
+        # Use Streamlit secrets
+        creds_dict = dict(st.secrets["gcp_service_account"])
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+        print("✅ Using Google Sheets credentials from Streamlit secrets")
+    else:
+        # Fallback to local file
+        creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
+        print("✅ Using Google Sheets credentials from local file")
+    
     client = gspread.authorize(creds)
     sheet = client.open("Maintenance Logs").sheet1
     SHEETS_AVAILABLE = True
