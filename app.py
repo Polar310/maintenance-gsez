@@ -25,7 +25,7 @@ with open("theme.css") as f:
 # )
 
 # --- ARISE Logo (update path as needed) ---
-st.image("/Users/polar/Desktop/maintenance app/arise_logo.png", width=180)
+st.image("arise_logo.png", width=180)
 # Helper function to convert column number (1-indexed) to Excel column letter
 # e.g., 1 -> 'A', 27 -> 'AA'
 def colnum_to_letter(n):

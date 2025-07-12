@@ -194,40 +194,45 @@ def send_daily_report():
 
 def send_daily_summary(): 
     #setup sheets 
-    creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", 
-                                                             [
-                                                                 "https://spreadsheets.google.com/feeds", 
-                                                              "https://www.googleapis.com/auth/drive"
-                                                              ])
-    client = gspread.authorize(creds)
-    sheet = client.open("Maintenance Logs").sheet1
-    records = sheet.get_all_records()
-    
-    today = datetime.now().date()
-    today_logs = [r for r in records if r["Timestamp"].startswith(str(today))]
-    
-    critical_today = [r for r in today_logs if "❌" in r.values()]
-    body = f"""
-    📊 Daily Maintenance Summary ({today})
+    if not SHEETS_AVAILABLE:
+        print("❌ Daily summary failed: Google Sheets not available")
+        return False
+        
+    try:
+        records = sheet.get_all_records()
+        
+        today = datetime.now().date()
+        today_logs = [r for r in records if r["Timestamp"].startswith(str(today))]
+        
+        critical_today = [r for r in today_logs if "❌" in r.values()]
+        body = f"""
+        📊 Daily Maintenance Summary ({today})
 
-    Total submissions: {len(today_logs)}
-    Issues flagged: {len(critical_today)}
+        Total submissions: {len(today_logs)}
+        Issues flagged: {len(critical_today)}
 
-    Vehicles with issues:
-    {', '.join(set(r['Vehicle'] for r in critical_today)) if critical_today else "None 🎉"}
+        Vehicles with issues:
+        {', '.join(set(r['Vehicle'] for r in critical_today)) if critical_today else "None 🎉"}
 
-    Check full log here: https://docs.google.com/spreadsheets/d/17pmwdqIlq1ws_M2paN81TlIbPn-3TKpp5M3mBi9NIXY/edit?usp=sharing
-    
-    """
-    
-    #send via gmail 
-    msg = MIMEMultipart()
-    msg["From"] = "gsezmaintenance.alerts@gmail.com"
-    msg["To"] = "gsezmaintenance.alerts@gmail.com"
-    msg["Subject"] = f"📊 Daily Maintenance Summary ({today})"
-    msg.attach(MIMEText(body, "plain"))
-    
-    with smtplib.SMTP("smtp.gmail.com", 587) as server: 
-        server.starttls()
-        server.login("gsezmaintenance.alerts@gmail.com", "GSEZARISE_maintenance")
-        server.send_message(msg)
+        Check full log here: https://docs.google.com/spreadsheets/d/17pmwdqIlq1ws_M2paN81TlIbPn-3TKpp5M3mBi9NIXY/edit?usp=sharing
+        
+        """
+        
+        #send via gmail 
+        msg = MIMEMultipart()
+        msg["From"] = "gsezmaintenance.alerts@gmail.com"
+        msg["To"] = "gsezmaintenance.alerts@gmail.com"
+        msg["Subject"] = f"📊 Daily Maintenance Summary ({today})"
+        msg.attach(MIMEText(body, "plain"))
+        
+        with smtplib.SMTP("smtp.gmail.com", 587) as server: 
+            server.starttls()
+            server.login("gsezmaintenance.alerts@gmail.com", "GSEZARISE_maintenance")
+            server.send_message(msg)
+            
+        print(f"✅ Daily summary sent for {today}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Failed to send daily summary: {e}")
+        return False
