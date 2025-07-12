@@ -36,10 +36,20 @@ def colnum_to_letter(n):
     return string
 
 # ----------------- Google Sheets Setup -----------------
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
-client = gspread.authorize(creds)
-sheet = client.open("Maintenance Logs").sheet1
+try:
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
+    client = gspread.authorize(creds)
+    sheet = client.open("Maintenance Logs").sheet1
+    SHEETS_AVAILABLE = True
+except FileNotFoundError:
+    print("⚠️ Warning: creds.json not found. Google Sheets integration disabled.")
+    SHEETS_AVAILABLE = False
+    sheet = None
+except Exception as e:
+    print(f"⚠️ Warning: Google Sheets setup failed: {e}")
+    SHEETS_AVAILABLE = False
+    sheet = None
 
 # ----------------- Language Dictionary -----------------
 lang = {
@@ -355,58 +365,11 @@ if driving_status in ["No", "Non"]:
                 if item in ["Leakages", "Noise"] and extra_text.get(key):
                     val = f"{val} - {extra_text[key]}"
                 checklist_values.append(val)
-            try:
-                # Find row index by vehicle ID (assumes Vehicle/equipment_NO is unique and in column A)
-                cell = sheet.find(selected_vehicle)
-                row_index = cell.row
+            if not SHEETS_AVAILABLE:
+                st.warning("⚠️ Google Sheets not available. Checklist data saved locally only.")
+                st.success("✅ Checklist submitted successfully! (Local mode)")
                 
-                # Get the headers to find the correct column positions
-                headers = sheet.row_values(1)
-                
-                # Debug: Print headers to see what we're working with
-                print(f"Headers found: {headers}")
-                
-                # Find the "Last Updated" column - try multiple variations
-                last_updated_col_index = None
-                for i, header in enumerate(headers):
-                    header_lower = header.lower().strip()
-                    if any(phrase in header_lower for phrase in ["last updated", "last update", "lastupdated", "lastupdate"]):
-                        last_updated_col_index = i + 1  # Convert to 1-indexed
-                        print(f"Found 'Last Updated' column at index {i+1} (column {colnum_to_letter(i+1)})")
-                        break
-                
-                # If "Last Updated" column not found, try to find it by position
-                if last_updated_col_index is None:
-                    # Assume it's the second-to-last column (common position)
-                    last_updated_col_index = len(headers) - 1
-                    print(f"Using fallback: column {colnum_to_letter(last_updated_col_index)}")
-                
-                # Calculate checklist columns (assuming they start after the static columns)
-                static_cols = 7  # A-G
-                checklist_start_col = static_cols + 1  # H is column 8
-                checklist_end_col = checklist_start_col + len(english_keys) - 1
-                start_letter = colnum_to_letter(checklist_start_col)
-                end_letter = colnum_to_letter(checklist_end_col)
-                update_range = f"{start_letter}{row_index}:{end_letter}{row_index}"
-                sheet.update(update_range, [checklist_values])
-                
-                # Update last updated timestamp in the correct column
-                last_update_letter = colnum_to_letter(last_updated_col_index)
-                print(f"Updating timestamp in column {last_update_letter} at row {row_index}")
-                
-                # Try to update the timestamp - if it fails, try the next column
-                try:
-                    sheet.update_acell(f"{last_update_letter}{row_index}", now.strftime("%Y-%m-%d %H:%M:%S"))
-                    print(f"✅ Successfully updated timestamp in {last_update_letter}{row_index}")
-                except Exception as timestamp_error:
-                    print(f"❌ Failed to update in {last_update_letter}, trying next column...")
-                    # Try the next column as fallback
-                    fallback_col = colnum_to_letter(last_updated_col_index + 1)
-                    sheet.update_acell(f"{fallback_col}{row_index}", now.strftime("%Y-%m-%d %H:%M:%S"))
-                    print(f"✅ Updated timestamp in fallback column {fallback_col}{row_index}")
-                st.success("✅ Checklist submitted successfully!")
-                
-                # After updating the sheet, check for critical issues and send alert email if needed
+                # Still check for critical issues and send email alerts
                 critical_fields_en = ["Coolant", "Battery Condition", "Engine Oil"]
                 critical_fields_fr = ["Liquide de refroidissement", "État de la batterie", "Huile moteur"]
 
@@ -427,9 +390,83 @@ if driving_status in ["No", "Non"]:
 
                 if issues:
                     send_alert_email(selected_vehicle, issues, now.strftime("%Y-%m-%d %H:%M:%S"))
+            else:
+                try:
+                    # Find row index by vehicle ID (assumes Vehicle/equipment_NO is unique and in column A)
+                    cell = sheet.find(selected_vehicle)
+                    row_index = cell.row
                     
-            except Exception as e:
-                st.error(f"❌ Failed to update sheet: {e}")
+                    # Get the headers to find the correct column positions
+                    headers = sheet.row_values(1)
+                    
+                    # Debug: Print headers to see what we're working with
+                    print(f"Headers found: {headers}")
+                    
+                    # Find the "Last Updated" column - try multiple variations
+                    last_updated_col_index = None
+                    for i, header in enumerate(headers):
+                        header_lower = header.lower().strip()
+                        if any(phrase in header_lower for phrase in ["last updated", "last update", "lastupdated", "lastupdate"]):
+                            last_updated_col_index = i + 1  # Convert to 1-indexed
+                            print(f"Found 'Last Updated' column at index {i+1} (column {colnum_to_letter(i+1)})")
+                            break
+                    
+                    # If "Last Updated" column not found, try to find it by position
+                    if last_updated_col_index is None:
+                        # Assume it's the second-to-last column (common position)
+                        last_updated_col_index = len(headers) - 1
+                        print(f"Using fallback: column {colnum_to_letter(last_updated_col_index)}")
+                    
+                    # Calculate checklist columns (assuming they start after the static columns)
+                    static_cols = 7  # A-G
+                    checklist_start_col = static_cols + 1  # H is column 8
+                    checklist_end_col = checklist_start_col + len(english_keys) - 1
+                    start_letter = colnum_to_letter(checklist_start_col)
+                    end_letter = colnum_to_letter(checklist_end_col)
+                    update_range = f"{start_letter}{row_index}:{end_letter}{row_index}"
+                    sheet.update(update_range, [checklist_values])
+                    
+                    # Update last updated timestamp in the correct column
+                    last_update_letter = colnum_to_letter(last_updated_col_index)
+                    print(f"Updating timestamp in column {last_update_letter} at row {row_index}")
+                    
+                    # Try to update the timestamp - if it fails, try the next column
+                    try:
+                        sheet.update_acell(f"{last_update_letter}{row_index}", now.strftime("%Y-%m-%d %H:%M:%S"))
+                        print(f"✅ Successfully updated timestamp in {last_update_letter}{row_index}")
+                    except Exception as timestamp_error:
+                        print(f"❌ Failed to update in {last_update_letter}, trying next column...")
+                        # Try the next column as fallback
+                        fallback_col = colnum_to_letter(last_updated_col_index + 1)
+                        sheet.update_acell(f"{fallback_col}{row_index}", now.strftime("%Y-%m-%d %H:%M:%S"))
+                        print(f"✅ Updated timestamp in fallback column {fallback_col}{row_index}")
+                    
+                    st.success("✅ Checklist submitted successfully!")
+                    
+                    # After updating the sheet, check for critical issues and send alert email if needed
+                    critical_fields_en = ["Coolant", "Battery Condition", "Engine Oil"]
+                    critical_fields_fr = ["Liquide de refroidissement", "État de la batterie", "Huile moteur"]
+
+                    issues = []
+                    if language == "en":
+                        for field in critical_fields_en:
+                            if responses.get(field) == "❌":
+                                issues.append(field)
+                    else:
+                        fr_to_en_critical = {
+                            "Liquide de refroidissement": "Coolant",
+                            "État de la batterie": "Battery Condition",
+                            "Huile moteur": "Engine Oil"
+                        }
+                        for field in critical_fields_fr:
+                            if responses.get(field) == "❌":
+                                issues.append(fr_to_en_critical[field])
+
+                    if issues:
+                        send_alert_email(selected_vehicle, issues, now.strftime("%Y-%m-%d %H:%M:%S"))
+                        
+                except Exception as e:
+                    st.error(f"❌ Failed to update sheet: {e}")
 
     else:
         st.warning(text["not_selected"])
@@ -443,30 +480,43 @@ else:
             if st.session_state.start_time:
                 duration = (end_time - st.session_state.start_time).total_seconds() / 60
                 duration = f"{duration:.1f} mins"
-            row = [
-                end_time.strftime("%Y-%m-%d %H:%M:%S"), "EMERGENCY",
-                "-", "-", "-", "-", "-", "-", "-", "-", "-", "-",
-                "🚨", duration, reason
-            ]
-            sheet.append_row(row)
+            
+            if SHEETS_AVAILABLE:
+                row = [
+                    end_time.strftime("%Y-%m-%d %H:%M:%S"), "EMERGENCY",
+                    "-", "-", "-", "-", "-", "-", "-", "-", "-", "-",
+                    "🚨", duration, reason
+                ]
+                sheet.append_row(row)
+                st.success("🚨 Emergency logged and driving stopped.")
+            else:
+                st.warning("⚠️ Google Sheets not available. Emergency logged locally only.")
+                st.success("🚨 Emergency logged and driving stopped. (Local mode)")
+            
             st.session_state.is_driving = False
-            st.success("🚨 Emergency logged and driving stopped.")
         else:
             st.warning("Please describe the emergency.")
+    
     if st.button("🛑 End Trip"):
         end_time = datetime.now()
         duration = "-"
         if st.session_state.start_time:
             duration = (end_time - st.session_state.start_time).total_seconds() / 60
             duration = f"{duration:.1f} mins"
-        row = [
-            end_time.strftime("%Y-%m-%d %H:%M:%S"), "END",
-            "-", "-", "-", "-", "-", "-", "-", "-", "-", "-",
-            "🛑", duration, "Normal end"
-        ]
-        sheet.append_row(row)
+        
+        if SHEETS_AVAILABLE:
+            row = [
+                end_time.strftime("%Y-%m-%d %H:%M:%S"), "END",
+                "-", "-", "-", "-", "-", "-", "-", "-", "-", "-",
+                "🛑", duration, "Normal end"
+            ]
+            sheet.append_row(row)
+            st.success("✅ Trip ended and logged.")
+        else:
+            st.warning("⚠️ Google Sheets not available. Trip ended logged locally only.")
+            st.success("✅ Trip ended and logged. (Local mode)")
+        
         st.session_state.is_driving = False
-        st.success("✅ Trip ended and logged.")
 
 # Add manual daily report trigger for testing
 st.markdown("---")

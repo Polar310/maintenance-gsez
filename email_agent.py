@@ -8,12 +8,23 @@ from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 import io
 import base64
+import os
 
-#set google sheets 
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
-client = gspread.authorize(creds)
-sheet = client.open("Maintenance Logs").sheet1
+# Google Sheets setup with error handling
+try:
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
+    client = gspread.authorize(creds)
+    sheet = client.open("Maintenance Logs").sheet1
+    SHEETS_AVAILABLE = True
+except FileNotFoundError:
+    print("⚠️ Warning: creds.json not found. Google Sheets integration disabled.")
+    SHEETS_AVAILABLE = False
+    sheet = None
+except Exception as e:
+    print(f"⚠️ Warning: Google Sheets setup failed: {e}")
+    SHEETS_AVAILABLE = False
+    sheet = None
 
 def send_alert_email(vehicle,issues,timestamp): 
     sender = "gsezmaintenance.alerts@gmail.com"
@@ -52,6 +63,10 @@ def send_daily_report():
     """
     Send daily report of all vehicles with critical issues (❌) and warnings (⚠️) in Coolant, Battery Condition, and Engine Oil
     """
+    if not SHEETS_AVAILABLE:
+        print("❌ Daily report failed: Google Sheets not available")
+        return False
+        
     try:
         # Get all data from the sheet
         all_data = sheet.get_all_records()
