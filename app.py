@@ -235,6 +235,11 @@ if driving_status in ["No", "Non"]:
     for en_key, fr_value in vehicle_type_translations["fr"].items():
         fr_to_en_vehicle[fr_value] = en_key
     
+    # Also create reverse mapping for English display names to actual Asset values
+    en_display_to_asset = {}
+    for asset_value, display_name in vehicle_type_translations["en"].items():
+        en_display_to_asset[display_name] = asset_value
+    
     selected_type_display = st.selectbox(text["vehicle"], [""] + vehicle_types)
     
     # Convert back to English for internal use
@@ -242,7 +247,8 @@ if driving_status in ["No", "Non"]:
         if language == "fr":
             selected_type = fr_to_en_vehicle.get(selected_type_display, selected_type_display)
         else:
-            selected_type = selected_type_display
+            # For English, convert display name back to actual Asset value
+            selected_type = en_display_to_asset.get(selected_type_display, selected_type_display)
     else:
         selected_type = ""
 
