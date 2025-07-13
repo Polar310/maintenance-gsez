@@ -8,22 +8,7 @@ from vehicle_data import vehicle_info
 with open("theme.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# Place ARISE logo at the absolute top left of the page
-# st.markdown(
-#     """
-#     <style>
-#     .arise-logo-top-left {
-#         position: absolute;
-#         top: 1.5rem;
-#         left: 1.5rem;
-#         z-index: 1000;
-#     }
-#     </style>
-#     <img src="arise_logo.png" class="arise-logo-top-left" width="120">
-#     """,
-#     unsafe_allow_html=True
-# )
-
+#working innit 
 # --- ARISE Logo (update path as needed) ---
 st.image("arise_logo.png", width=180)
 # Helper function to convert column number (1-indexed) to Excel column letter
