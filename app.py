@@ -60,7 +60,7 @@ lang = {
         "options": ["✅", "❌", "⚠️"],
         "checklist_items": [
             "Meter Reading", "Fuel", "Aggregation Function", "Engine Oil",
-            "Coolant", "Leakages", "Noise", "Battery Condition", "Oil (Trans/Diff)", "Others"
+            "Coolant", "Leakages", "Noise", "Battery Condition", "Others", "Oil (Trans/Diff)"
         ],
         "checklist_help": {
             "Meter Reading": "Note the odometer/hour meter reading.",
@@ -91,7 +91,7 @@ lang = {
         "options": ["✅", "❌", "⚠️"],
         "checklist_items": [
             "Compteur", "Carburant", "Fonction d'agrégation", "Huile moteur",
-            "Liquide de refroidissement", "Fuites", "Bruit", "État de la batterie", "Huile (Transmission / Différentiel)", "Autres"
+            "Liquide de refroidissement", "Fuites", "Bruit", "État de la batterie", "Autres", "Huile (Transmission / Différentiel)"
         ],
         "checklist_help": {
             "Compteur": "Relevez le compteur kilométrique ou horaire.",
