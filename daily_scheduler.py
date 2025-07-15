@@ -1,4 +1,4 @@
-#import schedule
+import schedule
 import time
 from datetime import datetime
 from email_agent import send_daily_report

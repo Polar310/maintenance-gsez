@@ -59,21 +59,20 @@ lang = {
         "status_driving": "🚘 You're in driving mode. Emergency + End buttons will appear in next step.",
         "options": ["✅", "❌", "⚠️"],
         "checklist_items": [
-            "Meter Reading", "Fuel", "Aggregation Functions", "Engine Oil",
-            "Coolant", "Leakages", "Noise", "Dashboard Indications",
-            "Battery Condition", "Oil (Trans/Diff)"
+            "Meter Reading", "Fuel", "Aggregation Function", "Engine Oil",
+            "Coolant", "Leakages", "Noise", "Battery Condition", "Oil (Trans/Diff)", "Others"
         ],
         "checklist_help": {
             "Meter Reading": "Note the odometer/hour meter reading.",
             "Fuel": "Is there enough fuel for operation?",
-            "Aggregation Functions": "Do all equipment functions respond properly?",
+            "Aggregation Function": "If any issues please fill in!",
             "Engine Oil": "Is the oil level sufficient?",
             "Coolant": "Is coolant level okay and no leaks?",
             "Leakages": "Any visible leaks under the vehicle?",
             "Noise": "Any strange sounds when starting or moving?",
-            "Dashboard Indications": "Any warning lights on the dashboard?",
             "Battery Condition": "Battery well connected and operational?",
-            "Oil (Trans/Diff)": "Transmission/differential oil okay (for heavy equipment)?"
+            "Oil (Trans/Diff)": "Transmission/differential oil okay (for heavy equipment)?",
+            "Others": "Describe any other issues with the vehicle/equipment."
         },
         "select_unit": "Select specific unit",
         "vehicle_details": "### 🔍 Vehicle Details",
@@ -91,21 +90,20 @@ lang = {
         "status_driving": "🚘 Vous êtes en mode conduite. Les boutons d'urgence + fin apparaîtront à l'étape suivante.",
         "options": ["✅", "❌", "⚠️"],
         "checklist_items": [
-            "Compteur", "Carburant", "Fonctions d'agrégation", "Huile moteur",
-            "Liquide de refroidissement", "Fuites", "Bruit", "Indicateurs de tableau de bord",
-            "État de la batterie", "Huile (Transmission / Différentiel)"
+            "Compteur", "Carburant", "Fonction d'agrégation", "Huile moteur",
+            "Liquide de refroidissement", "Fuites", "Bruit", "État de la batterie", "Huile (Transmission / Différentiel)", "Autres"
         ],
         "checklist_help": {
             "Compteur": "Relevez le compteur kilométrique ou horaire.",
             "Carburant": "Y a-t-il assez de carburant pour la tâche ?",
-            "Fonctions d'agrégation": "Toutes les fonctions de l’équipement répondent-elles correctement ?",
+            "Fonction d'agrégation": "En cas de problème, veuillez remplir !",
             "Huile moteur": "Le niveau d’huile est-il suffisant ?",
             "Liquide de refroidissement": "Le niveau de liquide est-il bon ? Fuites ?",
             "Fuites": "Fuites visibles sous le véhicule ?",
             "Bruit": "Bruit étrange lors du démarrage ou du déplacement ?",
-            "Indicateurs de tableau de bord": "Des voyants d’alerte sont-ils allumés ?",
             "État de la batterie": "Batterie bien connectée et fonctionnelle ?",
-            "Huile (Transmission / Différentiel)": "Huile de transmission / différentiel correcte (engins lourds) ?"
+            "Huile (Transmission / Différentiel)": "Huile de transmission / différentiel correcte (engins lourds) ?",
+            "Autres": "Décrivez tout autre problème avec le véhicule/l'équipement."
         },
         "select_unit": "Sélectionnez l'unité spécifique",
         "vehicle_details": "### 🔍 Détails du véhicule",
@@ -301,16 +299,13 @@ if driving_status in ["No", "Non"]:
                 ⚠️ = Avertissement/Besoin d'attention"
             )
         checklist_items = lang[language]["checklist_items"]
-        # Only show last item for heavy equipment
-        if selected_type not in ["Excavator", "Log Charger", "Excavatrice", "Chargeur de grumes"]:
-            checklist_items = checklist_items[:-1]
         responses = {}
         extra_text = {}
         for item in checklist_items:
             # Meter Reading: number input
             if item in ["Meter Reading", "Compteur"]:
                 st.markdown(f"**{item}**")
-                st.caption("Please type in meter reading number from dashboard" if language == "en" else "Veuillez saisir le numéro du compteur depuis le tableau de bord")
+                st.caption(text["checklist_help"].get(item, ""))
                 responses[item] = st.number_input("", min_value=0, step=1, key=f"meter_{item}")
                 st.markdown("\n")
             # Fuel, Engine Oil, Coolant, Battery Condition: icon-specific help
@@ -324,6 +319,13 @@ if driving_status in ["No", "Non"]:
                 st.caption(text["checklist_help"].get(item, ""))
                 responses[item] = st.radio("", text["options"], key=f"oil_{item}")
                 st.markdown("\n")
+            # Aggregation Function: icon + optional text
+            elif item in ["Aggregation Function", "Fonction d'agrégation"]:
+                st.markdown(f"**{item}**")
+                st.caption(text["checklist_help"].get(item, ""))
+                responses[item] = st.radio("", text["options"], key=f"aggfunc_{item}")
+                extra_text[item] = st.text_input("Describe issue (optional)" if language == "en" else "Décrivez le problème (optionnel)", key=f"aggfunc_text_{item}")
+                st.markdown("\n")
             # Leakages and Noise: icon + optional text
             elif item in ["Leakages", "Fuites", "Noise", "Bruit"]:
                 st.markdown(f"**{item}**")
@@ -334,6 +336,12 @@ if driving_status in ["No", "Non"]:
                 else:
                     responses[item] = st.radio("", text["options"], key=f"noise_{item}")
                     extra_text[item] = st.text_input("Describe what's going on (optional)" if language == "en" else "Décrivez ce qui se passe (optionnel)", key=f"noise_text_{item}")
+                st.markdown("\n")
+            # Others: text input only
+            elif item in ["Others", "Autres"]:
+                st.markdown(f"**{item}**")
+                st.caption(text["checklist_help"].get(item, ""))
+                responses[item] = st.text_input("Describe any other issues" if language == "en" else "Décrivez tout autre problème", key=f"others_{item}")
                 st.markdown("\n")
             else:
                 st.markdown(f"**{item}**")
