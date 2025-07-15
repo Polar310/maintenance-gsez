@@ -392,17 +392,10 @@ if driving_status in ["No", "Non"]:
                 critical_fields_en = ["Coolant", "Battery Condition", "Engine Oil"]
                 critical_fields_fr = ["Liquide de refroidissement", "État de la batterie", "Huile moteur"]
 
-                # Battery icon mapping
-                battery_icon_map = {"🟢": "✅", "⚪️": "⚠️", "🔴": "❌"}
-
                 issues = []
                 if language == "en":
                     for field in critical_fields_en:
-                        val = responses.get(field, "")
-                        # Map battery icons to status
-                        if field == "Battery Condition":
-                            val = battery_icon_map.get(val, val)
-                        if val == "❌":
+                        if responses.get(field) == "❌":
                             issues.append(field)
                 else:
                     fr_to_en_critical = {
@@ -411,11 +404,7 @@ if driving_status in ["No", "Non"]:
                         "Huile moteur": "Engine Oil"
                     }
                     for field in critical_fields_fr:
-                        val = responses.get(field, "")
-                        # Map battery icons to status
-                        if field == "État de la batterie":
-                            val = battery_icon_map.get(val, val)
-                        if val == "❌":
+                        if responses.get(field) == "❌":
                             issues.append(fr_to_en_critical[field])
 
                 if issues:
@@ -480,11 +469,7 @@ if driving_status in ["No", "Non"]:
                     issues = []
                     if language == "en":
                         for field in critical_fields_en:
-                            val = responses.get(field, "")
-                            # Map battery icons to status
-                            if field == "Battery Condition":
-                                val = battery_icon_map.get(val, val)
-                            if val == "❌":
+                            if responses.get(field) == "❌":
                                 issues.append(field)
                     else:
                         fr_to_en_critical = {
@@ -493,11 +478,7 @@ if driving_status in ["No", "Non"]:
                             "Huile moteur": "Engine Oil"
                         }
                         for field in critical_fields_fr:
-                            val = responses.get(field, "")
-                            # Map battery icons to status
-                            if field == "État de la batterie":
-                                val = battery_icon_map.get(val, val)
-                            if val == "❌":
+                            if responses.get(field) == "❌":
                                 issues.append(fr_to_en_critical[field])
 
                     if issues:
