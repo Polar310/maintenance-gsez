@@ -337,11 +337,12 @@ if driving_status in ["No", "Non"]:
                     responses[item] = st.radio("", text["options"], key=f"noise_{item}")
                     extra_text[item] = st.text_input("Describe what's going on (optional)" if language == "en" else "Décrivez ce qui se passe (optionnel)", key=f"noise_text_{item}")
                 st.markdown("\n")
-            # Others: text input only
+            # Others: text input only, clear any previous radio value
             elif item in ["Others", "Autres"]:
                 st.markdown(f"**{item}**")
                 st.caption(text["checklist_help"].get(item, ""))
                 responses[item] = st.text_input("Describe any other issues" if language == "en" else "Décrivez tout autre problème", key=f"others_{item}")
+                st.session_state.pop(f"other_{item}", None)
                 st.markdown("\n")
             else:
                 st.markdown(f"**{item}**")
