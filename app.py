@@ -371,9 +371,12 @@ if driving_status in ["No", "Non"]:
                 else:
                     key = item
                 val = responses.get(key, "")
-                # For Leakages/Noise, append text if present
-                if item in ["Leakages", "Noise"] and extra_text.get(key):
+                # For Leakages/Noise/Aggregation Function, append text if present
+                if item in ["Leakages", "Noise", "Aggregation Function"] and extra_text.get(key):
                     val = f"{val} - {extra_text[key]}"
+                # For Others/Autres, just use the text input (no icon)
+                if item == "Others" or (language == "fr" and key == "Autres"):
+                    val = responses.get(key, "")
                 checklist_values.append(val)
             if not SHEETS_AVAILABLE:
                 st.warning("⚠️ Google Sheets not available. Checklist data saved locally only.")
