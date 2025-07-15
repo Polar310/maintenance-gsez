@@ -60,7 +60,7 @@ lang = {
         "options": ["✅", "❌", "⚠️"],
         "checklist_items": [
             "Meter Reading", "Fuel", "Aggregation Function", "Engine Oil",
-            "Coolant", "Leakages", "Noise", "Battery Condition", "Others", "Oil (Trans/Diff)"
+            "Coolant", "Leakages", "Noise", "Battery Condition", "Oil (Trans/Diff)"
         ],
         "checklist_help": {
             "Meter Reading": "Note the odometer/hour meter reading.",
@@ -72,7 +72,7 @@ lang = {
             "Noise": "Any strange sounds when starting or moving?",
             "Battery Condition": "Battery well connected and operational?",
             "Oil (Trans/Diff)": "Transmission/differential oil okay (for heavy equipment)?",
-            "Others": "Describe any other issues with the vehicle/equipment."
+            "Battery Condition Notes": "Are there any other problems with the car?"
         },
         "select_unit": "Select specific unit",
         "vehicle_details": "### 🔍 Vehicle Details",
@@ -91,7 +91,7 @@ lang = {
         "options": ["✅", "❌", "⚠️"],
         "checklist_items": [
             "Compteur", "Carburant", "Fonction d'agrégation", "Huile moteur",
-            "Liquide de refroidissement", "Fuites", "Bruit", "État de la batterie", "Autres", "Huile (Transmission / Différentiel)"
+            "Liquide de refroidissement", "Fuites", "Bruit", "État de la batterie", "Huile (Transmission / Différentiel)"
         ],
         "checklist_help": {
             "Compteur": "Relevez le compteur kilométrique ou horaire.",
@@ -103,7 +103,7 @@ lang = {
             "Bruit": "Bruit étrange lors du démarrage ou du déplacement ?",
             "État de la batterie": "Batterie bien connectée et fonctionnelle ?",
             "Huile (Transmission / Différentiel)": "Huile de transmission / différentiel correcte (engins lourds) ?",
-            "Autres": "Décrivez tout autre problème avec le véhicule/l'équipement."
+            "Battery Condition Notes": "Y a-t-il d'autres problèmes avec le véhicule ?"
         },
         "select_unit": "Sélectionnez l'unité spécifique",
         "vehicle_details": "### 🔍 Détails du véhicule",
@@ -308,13 +308,13 @@ if driving_status in ["No", "Non"]:
                 st.caption(text["checklist_help"].get(item, ""))
                 responses[item] = st.number_input("", min_value=0, step=1, key=f"meter_{item}")
                 st.markdown("\n")
-            # Fuel, Engine Oil, Coolant, Battery Condition: icon-specific help
+            # Fuel, Engine Oil, Coolant: icon-specific help
             elif item in ["Fuel", "Carburant"]:
                 st.markdown(f"**{item}**")
                 st.caption(text["checklist_help"].get(item, ""))
                 responses[item] = st.radio("", text["options"], key=f"fuel_{item}")
                 st.markdown("\n")
-            elif item in ["Engine Oil", "Huile moteur", "Coolant", "Liquide de refroidissement", "Battery Condition", "État de la batterie"]:
+            elif item in ["Engine Oil", "Huile moteur", "Coolant", "Liquide de refroidissement"]:
                 st.markdown(f"**{item}**")
                 st.caption(text["checklist_help"].get(item, ""))
                 responses[item] = st.radio("", text["options"], key=f"oil_{item}")
@@ -337,12 +337,15 @@ if driving_status in ["No", "Non"]:
                     responses[item] = st.radio("", text["options"], key=f"noise_{item}")
                     extra_text[item] = st.text_input("Describe what's going on (optional)" if language == "en" else "Décrivez ce qui se passe (optionnel)", key=f"noise_text_{item}")
                 st.markdown("\n")
-            # Others: text input only, clear any previous radio value
-            elif item in ["Others", "Autres"]:
+            # Battery Condition: icon + text input for 'other problems'
+            elif item in ["Battery Condition", "État de la batterie"]:
                 st.markdown(f"**{item}**")
                 st.caption(text["checklist_help"].get(item, ""))
-                responses[item] = st.text_input("Describe any other issues" if language == "en" else "Décrivez tout autre problème", key=f"others_{item}")
-                st.session_state.pop(f"other_{item}", None)
+                responses[item] = st.radio("", text["options"], key=f"battery_{item}")
+                extra_text[item] = st.text_input(
+                    text["checklist_help"]["Battery Condition Notes"] if language == "en" else text["checklist_help"]["Battery Condition Notes"],
+                    key=f"battery_text_{item}"
+                )
                 st.markdown("\n")
             else:
                 st.markdown(f"**{item}**")
@@ -375,9 +378,10 @@ if driving_status in ["No", "Non"]:
                 # For Leakages/Noise/Aggregation Function, append text if present
                 if item in ["Leakages", "Noise", "Aggregation Function"] and extra_text.get(key):
                     val = f"{val} - {extra_text[key]}"
-                # For Others/Autres, just use the text input (no icon)
-                if item == "Others" or (language == "fr" and key == "Autres"):
-                    val = responses.get(key, "")
+                # For Battery Condition, append text if present (for Battery Condition_&_Others column)
+                if item == "Battery Condition":
+                    if extra_text.get(key):
+                        val = f"{val} - {extra_text[key]}"
                 checklist_values.append(val)
             if not SHEETS_AVAILABLE:
                 st.warning("⚠️ Google Sheets not available. Checklist data saved locally only.")
