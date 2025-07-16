@@ -539,17 +539,3 @@ else:
 
 # Add manual daily report trigger for testing
 st.markdown("---")
-
-# Admin tools with enhanced styling
-with st.container():
-    st.markdown('<div class="main">', unsafe_allow_html=True)
-    st.subheader("🔧 Admin Tools")
-    if st.button("📊 Send Daily Report (Test)"):
-        try:
-            if send_daily_report():
-                st.success("✅ Daily report sent successfully!")
-            else:
-                st.error("❌ Failed to send daily report")
-        except Exception as e:
-            st.error(f"❌ Error sending daily report: {e}")
-    st.markdown('</div>', unsafe_allow_html=True)
