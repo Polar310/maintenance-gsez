@@ -60,18 +60,18 @@ lang = {
         "options": ["✅", "❌", "⚠️"],
         "checklist_items": [
             "Meter Reading", "Fuel", "Aggregation Function", "Engine Oil",
-            "Coolant", "Leakages", "Noise", "Battery Condition", "Oil (Trans/Diff)"
+            "Water Level in Radiator", "Leakages", "Noise", "Battery Condition", "Oil (Trans/Diff)"
         ],
         "checklist_help": {
             "Meter Reading": "Note the odometer/hour meter reading.",
             "Fuel": "Is there enough fuel for operation?",
             "Aggregation Function": "If any issues please fill in!",
             "Engine Oil": "Is the oil level sufficient?",
-            "Coolant": "Is coolant level okay and no leaks?",
+            "Water Level in Radiator": "Is Water Level in Radiator level okay and no leaks?",
             "Leakages": "Any visible leaks under the vehicle?",
             "Noise": "Any strange sounds when starting or moving?",
             "Battery Condition": "Battery well connected and operational?",
-            "Oil (Trans/Diff)": "Transmission/differential oil okay (for heavy equipment)?",
+            "Oil (Trans/Diff)": "Transmission/differential oil okay? (only for heavy equipment)",
             "Battery Condition Notes": "Are there any other problems with the car?"
         },
         "select_unit": "Select specific unit",
@@ -308,13 +308,13 @@ if driving_status in ["No", "Non"]:
                 st.caption(text["checklist_help"].get(item, ""))
                 responses[item] = st.number_input("", min_value=0, step=1, key=f"meter_{item}")
                 st.markdown("\n")
-            # Fuel, Engine Oil, Coolant: icon-specific help
+            # Fuel, Engine Oil, Water Level in Radiator: icon-specific help
             elif item in ["Fuel", "Carburant"]:
                 st.markdown(f"**{item}**")
                 st.caption(text["checklist_help"].get(item, ""))
                 responses[item] = st.radio("", text["options"], key=f"fuel_{item}")
                 st.markdown("\n")
-            elif item in ["Engine Oil", "Huile moteur", "Coolant", "Liquide de refroidissement"]:
+            elif item in ["Engine Oil", "Huile moteur", "Liquide de refroidissement", "Liquide de refroidissement"]:
                 st.markdown(f"**{item}**")
                 st.caption(text["checklist_help"].get(item, ""))
                 responses[item] = st.radio("", text["options"], key=f"oil_{item}")
@@ -389,7 +389,7 @@ if driving_status in ["No", "Non"]:
                 st.success("✅ Checklist submitted successfully! (Local mode)")
                 
                 # Still check for critical issues and send email alerts
-                critical_fields_en = ["Coolant", "Battery Condition", "Engine Oil"]
+                critical_fields_en = ["Water Level in Radiator", "Battery Condition", "Engine Oil"]
                 critical_fields_fr = ["Liquide de refroidissement", "État de la batterie", "Huile moteur"]
 
                 issues = []
@@ -399,7 +399,7 @@ if driving_status in ["No", "Non"]:
                             issues.append(field)
                 else:
                     fr_to_en_critical = {
-                        "Liquide de refroidissement": "Coolant",
+                        "Liquide de refroidissement": "Water Level in Radiator",
                         "État de la batterie": "Battery Condition",
                         "Huile moteur": "Engine Oil"
                     }
@@ -463,7 +463,7 @@ if driving_status in ["No", "Non"]:
                     st.success("✅ Checklist submitted successfully!")
                     
                     # After updating the sheet, check for critical issues and send alert email if needed
-                    critical_fields_en = ["Coolant", "Battery Condition", "Engine Oil"]
+                    critical_fields_en = ["Water Level in Radiator", "Battery Condition", "Engine Oil"]
                     critical_fields_fr = ["Liquide de refroidissement", "État de la batterie", "Huile moteur"]
 
                     issues = []
@@ -473,7 +473,7 @@ if driving_status in ["No", "Non"]:
                                 issues.append(field)
                     else:
                         fr_to_en_critical = {
-                            "Liquide de refroidissement": "Coolant",
+                            "Liquide de refroidissement": "Water Level in Radiator",
                             "État de la batterie": "Battery Condition",
                             "Huile moteur": "Engine Oil"
                         }
